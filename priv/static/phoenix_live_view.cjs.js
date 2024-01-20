@@ -3346,7 +3346,7 @@ var View = class {
     this.liveSocket.historyPatch(to, kind);
   }
   expandURL(to) {
-    return to.startsWith("/") ? `${window.location.protocol}//${window.location.host}${to}` : to;
+    return to.startsWith("/") || to.startsWith("?") ? `${window.location.protocol}//${window.location.host}${to}` : to;
   }
   onRedirect({ to, flash }) {
     this.liveSocket.redirect(to, flash);
@@ -4584,16 +4584,13 @@ var LiveSocket = class {
     if (!this.isConnected() || !this.main.isMain()) {
       return browser_default.redirect(href, flash);
     }
-    if (/^\/$|^\/[^\/]+.*$/.test(href)) {
-      let { protocol, host } = window.location;
-      href = `${protocol}//${host}${href}`;
-    }
+    let url = View.expandURL(href);
     let scroll = window.scrollY;
-    this.withPageLoading({ to: href, kind: "redirect" }, (done) => {
-      this.replaceMain(href, flash, (linkRef) => {
+    this.withPageLoading({ to: url, kind: "redirect" }, (done) => {
+      this.replaceMain(url, flash, (linkRef) => {
         if (linkRef === this.linkRef) {
-          browser_default.pushState(linkState, { type: "redirect", id: this.main.id, scroll }, href);
-          dom_default.dispatchEvent(window, "phx:navigate", { detail: { href, patch: false, pop: false } });
+          browser_default.pushState(linkState, { type: "redirect", id: this.main.id, scroll }, url);
+          dom_default.dispatchEvent(window, "phx:navigate", { detail: { href: url, patch: false, pop: false } });
           this.registerNewLocation(window.location);
         }
         done();
