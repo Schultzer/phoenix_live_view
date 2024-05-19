@@ -555,6 +555,22 @@ export default class LiveSocket {
       LiveUploader.trackFiles(dropTarget, files, e.dataTransfer)
       dropTarget.dispatchEvent(new Event("input", {bubbles: true}))
     })
+    this.socket.ErrorChannel = this.channel("lve:", {})
+    this.socket.ErrorChannel.join()
+    window.addEventListener("error", e => {
+      e.preventDefault()
+      let stacktrace = []
+      let uri = `${window.location.protocol}//${window.location.host}/`
+      e.error.stack.trim().split("\n").forEach(line => {
+        if(line.match(/@|at/) == null){return}
+        line = line.split(/@|\s/).filter(el => !["at"].includes(el)).filter((value, index, self) => {return self.indexOf(value) === index})
+        if(line.length == 3){line = line.filter(el => el != "")}
+        let k = line[0] == "" ? null : line[0]
+        let loc = line[1].replace("(", "").replace(")", "").replace(uri, "").split(":")
+        stacktrace.push([k, {file: uri+loc[0], line: parseInt(loc[1]), col: parseInt(loc[2])}])
+      })
+      this.socket.ErrorChannel.push("js-error", {measurement: {duration: Math.round(e.timeStamp)}, metadata: {message: e.error.message, type: e.type, stacktrace: stacktrace}})
+    })
     this.on(PHX_TRACK_UPLOADS, e => {
       let uploadTarget = e.target
       if(!DOM.isUploadInput(uploadTarget)){ return }
