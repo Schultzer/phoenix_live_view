@@ -95,6 +95,7 @@ defmodule Phoenix.LiveView.Socket do
           transport_pid: pid() | nil
         }
 
+  channel "lve:*", Phoenix.LiveView.ErrorChannel
   channel "lvu:*", Phoenix.LiveView.UploadChannel
   channel "lv:*", Phoenix.LiveView.Channel
 
@@ -110,6 +111,7 @@ defmodule Phoenix.LiveView.Socket do
     quote do
       use Phoenix.Socket
 
+      channel "lve:*", Phoenix.LiveView.ErrorChannel
       channel "lvu:*", Phoenix.LiveView.UploadChannel
       channel "lv:*", Phoenix.LiveView.Channel
 
